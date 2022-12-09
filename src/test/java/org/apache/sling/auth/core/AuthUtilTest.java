@@ -161,4 +161,11 @@ public class AuthUtilTest {
         Mockito.when(request.getHeader("User-Agent")).thenReturn("WebDAV Client");
         Assert.assertFalse(AuthUtil.isBrowserRequest(request));
     }
+
+    @Test
+    public void testAmazonURL() {
+        HttpServletRequest mock = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(mock.getContextPath()).thenReturn("/content/we-retail");
+        Assert.assertEquals(true, AuthUtil.isRedirectValid(mock, "/content/we-retail/us/en/men.html?cid=emschedulederci_new-dei-training-posted-to-the-hub--understanding-micro-aggressi.html_11_24&wcmmode=disabled"));
+    }
 }
