@@ -102,8 +102,8 @@ import org.slf4j.LoggerFactory;
  * Currently this class does not support multiple handlers for any one request
  * URL.
  */
-@Component(name = "org.apache.sling.engine.impl.auth.SlingAuthenticator",
-           service = {Authenticator.class, AuthenticationSupport.class, ServletRequestListener.class })
+@Component(name = "org.apache.sling.engine.impl.auth.SlingAuthenticator", service = { Authenticator.class,
+        AuthenticationSupport.class, ServletRequestListener.class })
 @HttpWhiteboardContextSelect("(" + HttpWhiteboardConstants.HTTP_WHITEBOARD_CONTEXT_NAME + "=*)")
 @HttpWhiteboardListener
 @ServiceDescription("Apache Sling Request Authenticator")
@@ -112,108 +112,103 @@ import org.slf4j.LoggerFactory;
 public class SlingAuthenticator implements Authenticator,
         AuthenticationSupport, ServletRequestListener {
 
-    @ObjectClassDefinition(name = "Apache Sling Authentication Service",
-          description = "Extracts user authentication details from the request with" +
+    @ObjectClassDefinition(name = "Apache Sling Authentication Service", description = "Extracts user authentication details from the request with"
+            +
             " the help of authentication handlers registered as separate services. One" +
             " example of such an authentication handler is the handler HTTP Authorization" +
             " header contained authentication.")
     public @interface Config {
 
-        @AttributeDefinition(name = "Impersonation Cookie",
-                description = "The name the HTTP Cookie to set with the value" +
-                        " of the user which is to be impersonated. This cookie will always be a session" +
-                        " cookie.")
+        @AttributeDefinition(name = "Impersonation Cookie", description = "The name the HTTP Cookie to set with the value"
+                +
+                " of the user which is to be impersonated. This cookie will always be a session" +
+                " cookie.")
         String auth_sudo_cookie() default "sling.sudo";
 
-        @AttributeDefinition(name = "Impersonation Parameter",
-                description = "The name of the request parameter initiating" +
-                        " impersonation. Setting this parameter to a user id will result in using an" +
-                        " impersonated session (instead of the actually authenticated session) and set" +
-                        " a session cookie of the name defined in the Impersonation Cookie setting.")
+        @AttributeDefinition(name = "Impersonation Parameter", description = "The name of the request parameter initiating"
+                +
+                " impersonation. Setting this parameter to a user id will result in using an" +
+                " impersonated session (instead of the actually authenticated session) and set" +
+                " a session cookie of the name defined in the Impersonation Cookie setting.")
         String auth_sudo_parameter() default "sudo";
 
-        @AttributeDefinition(name = "Allow Anonymous Access",
-                description = "Whether default access as anonymous when no" +
-                        " credentials are present in the request is allowed. The default value is" +
-                        " \"true\" to allow access without credentials. When set to \"false\" access to the" +
-                        " repository is only allowed if valid credentials are presented. The value of" +
-                        " this configuration option is added to list of Authentication Requirements" +
-                        " and needs not be explicitly listed. If anonymous access is allowed the entry" +
-                        " added is \"-/\". Otherwise anonymous access is denied and \"+/\" is added to the" +
-                        " list.")
+        @AttributeDefinition(name = "Allow Anonymous Access", description = "Whether default access as anonymous when no"
+                +
+                " credentials are present in the request is allowed. The default value is" +
+                " \"true\" to allow access without credentials. When set to \"false\" access to the" +
+                " repository is only allowed if valid credentials are presented. The value of" +
+                " this configuration option is added to list of Authentication Requirements" +
+                " and needs not be explicitly listed. If anonymous access is allowed the entry" +
+                " added is \"-/\". Otherwise anonymous access is denied and \"+/\" is added to the" +
+                " list.")
         boolean auth_annonymous() default true;
 
-        @AttributeDefinition(name = "Authentication Requirements",
-                description = "Defines URL space subtrees which require" +
-                        " or don't require authentication. For any request the best matching path" +
-                        " configured applies and defines whether authentication is actually required" +
-                        " for the request or not. Each entry in this list can be an absolute path (such" +
-                        " as /content) or and absolute URI (such as http://thehost/content). Optionally" +
-                        " each entry may be prefixed by a plus (+) or minus (-) sign indicating that" +
-                        " authentication is required (plus) or not required (minus). Example entries are" +
-                        " \"/content\" or \"+/content\" to require authentication at and below \"/content\" and" +
-                        " \"-/system/sling/login\" to not require authentication at and below" +
-                        " \"/system/sling/login\". By default this list is empty. This list is extended at" +
-                        " run time with additional entries: One entry is added for the \"Allow Anonymous" +
-                        " Access\" configuration. Other entries are added for any services setting the" +
-                        " \"sling.auth.requirements\" service registration property.")
+        @AttributeDefinition(name = "Authentication Requirements", description = "Defines URL space subtrees which require"
+                +
+                " or don't require authentication. For any request the best matching path" +
+                " configured applies and defines whether authentication is actually required" +
+                " for the request or not. Each entry in this list can be an absolute path (such" +
+                " as /content) or and absolute URI (such as http://thehost/content). Optionally" +
+                " each entry may be prefixed by a plus (+) or minus (-) sign indicating that" +
+                " authentication is required (plus) or not required (minus). Example entries are" +
+                " \"/content\" or \"+/content\" to require authentication at and below \"/content\" and" +
+                " \"-/system/sling/login\" to not require authentication at and below" +
+                " \"/system/sling/login\". By default this list is empty. This list is extended at" +
+                " run time with additional entries: One entry is added for the \"Allow Anonymous" +
+                " Access\" configuration. Other entries are added for any services setting the" +
+                " \"sling.auth.requirements\" service registration property.")
         String[] sling_auth_requirements();
 
-        @AttributeDefinition(name = "Anonymous User Name",
-                description = "Defines which user name to assume" +
-                        " for anonymous requests, that is requests not providing credentials" +
-                        " supported by any of the registered authentication handlers. If this" +
-                        " property is missing or empty, the default is assumed which depends on" +
-                        " the resource provider(s). Otherwise anonymous requests are handled with" +
-                        " this user name. If the configured user name does not exist or is not" +
-                        " allowed to access the resource data, anonymous requests may still be" +
-                        " blocked. If anonymous access is not allowed, this property is ignored.")
+        @AttributeDefinition(name = "Anonymous User Name", description = "Defines which user name to assume" +
+                " for anonymous requests, that is requests not providing credentials" +
+                " supported by any of the registered authentication handlers. If this" +
+                " property is missing or empty, the default is assumed which depends on" +
+                " the resource provider(s). Otherwise anonymous requests are handled with" +
+                " this user name. If the configured user name does not exist or is not" +
+                " allowed to access the resource data, anonymous requests may still be" +
+                " blocked. If anonymous access is not allowed, this property is ignored.")
         String sling_auth_anonymous_user();
 
-        @AttributeDefinition(name = "Anonymous User Password",
-                description = "Password for the anonymous" +
-                        " user defined in the Anonymous User Name field. This property is only" +
-                        " used if a non-empty anonymous user name is configured. If this property" +
-                        " is not defined but a password is required, an empty password would be" +
-                        " assumed.", type = AttributeType.PASSWORD)
+        @AttributeDefinition(name = "Anonymous User Password", description = "Password for the anonymous" +
+                " user defined in the Anonymous User Name field. This property is only" +
+                " used if a non-empty anonymous user name is configured. If this property" +
+                " is not defined but a password is required, an empty password would be" +
+                " assumed.", type = AttributeType.PASSWORD)
         String sling_auth_anonymous_password();
 
-        @AttributeDefinition(name = "HTTP Basic Authentication",
-                description = "Level of support for HTTP Basic Authentication. Such" +
-                        " support can be provided in three levels: (1) no support at all, that is" +
-                        " disabled, (2) preemptive support, that is HTTP Basic Authentication is" +
-                        " supported if the authentication header is set in the request, (3) full" +
-                        " support. The default is preemptive support unless Anonymous Access is" +
-                        " not allowed. In this case HTTP Basic Authentication is always enabled" +
-                        " to ensure clients can authenticate at least with basic authentication.",
-                options = {
+        @AttributeDefinition(name = "HTTP Basic Authentication", description = "Level of support for HTTP Basic Authentication. Such"
+                +
+                " support can be provided in three levels: (1) no support at all, that is" +
+                " disabled, (2) preemptive support, that is HTTP Basic Authentication is" +
+                " supported if the authentication header is set in the request, (3) full" +
+                " support. The default is preemptive support unless Anonymous Access is" +
+                " not allowed. In this case HTTP Basic Authentication is always enabled" +
+                " to ensure clients can authenticate at least with basic authentication.", options = {
                         @Option(label = "Enabled", value = HTTP_AUTH_ENABLED),
                         @Option(label = "Enabled (Preemptive)", value = HTTP_AUTH_PREEMPTIVE),
                         @Option(label = "Disabled", value = HTTP_AUTH_DISABLED)
                 })
         String auth_http() default HTTP_AUTH_PREEMPTIVE;
 
-        @AttributeDefinition(name = "Realm",
-                description = "HTTP BASIC authentication realm. This property" +
-                        " is only used if the HTTP Basic Authentication support is not disabled. The" +
-                        " default value is \"Sling (Development)\".")
+        @AttributeDefinition(name = "Realm", description = "HTTP BASIC authentication realm. This property" +
+                " is only used if the HTTP Basic Authentication support is not disabled. The" +
+                " default value is \"Sling (Development)\".")
         String auth_http_realm() default "Sling (Development)";
 
-        @AttributeDefinition(name = "Authentication URI Suffices",
-                description = "A list of request URI suffixes intended to" +
-                        " be handled by Authentication Handlers. Any request whose request URI" +
-                        " ends with any one of the listed suffices is intended to be handled by" +
-                        " an Authentication Handler causing the request to either be rejected or" +
-                        " the client being redirected to another location and thus the request not" +
-                        " being further processed after the authentication phase. The default is" +
-                        " just \"/j_security_check\" which is the suffix defined by the Servlet API" +
-                        " specification used for FORM based authentication.")
+        @AttributeDefinition(name = "Authentication URI Suffices", description = "A list of request URI suffixes intended to"
+                +
+                " be handled by Authentication Handlers. Any request whose request URI" +
+                " ends with any one of the listed suffices is intended to be handled by" +
+                " an Authentication Handler causing the request to either be rejected or" +
+                " the client being redirected to another location and thus the request not" +
+                " being further processed after the authentication phase. The default is" +
+                " just \"/j_security_check\" which is the suffix defined by the Servlet API" +
+                " specification used for FORM based authentication.")
         String[] auth_uri_suffix() default DEFAULT_AUTH_URI_SUFFIX;
     }
 
     /** default log */
     private final Logger log = LoggerFactory.getLogger(SlingAuthenticator.class);
-
 
     /**
      * Value of the {@link #PAR_HTTP_AUTH} property to fully enable the built-in
@@ -330,7 +325,7 @@ public class SlingAuthenticator implements Authenticator,
     /**
      * The event admin service.
      */
-    @Reference(policy=ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL)
+    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL)
     private volatile EventAdmin eventAdmin;
 
     // ---------- SCR integration
@@ -341,26 +336,26 @@ public class SlingAuthenticator implements Authenticator,
         modified(config);
 
         AuthenticatorWebConsolePlugin plugin = new AuthenticatorWebConsolePlugin(
-            this);
+                this);
         Hashtable<String, Object> props = new Hashtable<String, Object>();
         props.put("felix.webconsole.label", plugin.getLabel());
         props.put("felix.webconsole.title", plugin.getTitle());
         props.put("felix.webconsole.category", "Sling");
         props.put(Constants.SERVICE_DESCRIPTION,
-            "Sling Request Authenticator WebConsole Plugin");
+                "Sling Request Authenticator WebConsole Plugin");
         props.put(Constants.SERVICE_VENDOR,
-            "The Apache Software Foundation");
+                "The Apache Software Foundation");
 
         webConsolePlugin = bundleContext.registerService(
-            Servlet.class, plugin, props);
+                Servlet.class, plugin, props);
 
         serviceListener = SlingAuthenticatorServiceListener.createListener(
-            bundleContext, Executors.newSingleThreadExecutor(), resourceResolverFactory, this.authRequiredCache);
+                bundleContext, Executors.newSingleThreadExecutor(), resourceResolverFactory, this.authRequiredCache);
 
         authHandlerTracker = new AuthenticationHandlerTracker(bundleContext,
-            authHandlerCache);
+                authHandlerCache);
         engineAuthHandlerTracker = new EngineAuthenticationHandlerTracker(
-            bundleContext, authHandlerCache);
+                bundleContext, authHandlerCache);
         authInfoPostProcessorTracker = new ServiceTracker(bundleContext, AuthenticationInfoPostProcessor.class, null);
         authInfoPostProcessorTracker.open();
     }
@@ -370,16 +365,16 @@ public class SlingAuthenticator implements Authenticator,
         String newCookie = config.auth_sudo_cookie();
         if (!newCookie.equals(this.sudoCookieName)) {
             log.info(
-                "modified: Setting new cookie name for impersonation {} (was {})",
-                newCookie, this.sudoCookieName);
+                    "modified: Setting new cookie name for impersonation {} (was {})",
+                    newCookie, this.sudoCookieName);
             this.sudoCookieName = newCookie;
         }
 
         String newPar = config.auth_sudo_parameter();
         if (!newPar.equals(this.sudoParameterName)) {
             log.info(
-                "modified: Setting new parameter name for impersonation {} (was {})",
-                newPar, this.sudoParameterName);
+                    "modified: Setting new parameter name for impersonation {} (was {})",
+                    newPar, this.sudoParameterName);
             this.sudoParameterName = newPar;
         }
 
@@ -393,7 +388,7 @@ public class SlingAuthenticator implements Authenticator,
             for (String authReq : authReqs) {
                 if (authReq != null && authReq.length() > 0) {
                     authRequiredCache.addHolder(AuthenticationRequirementHolder.fromConfig(
-                        authReq, null));
+                            authReq, null));
                 }
             }
         }
@@ -401,7 +396,8 @@ public class SlingAuthenticator implements Authenticator,
         final String anonUser = config.sling_auth_anonymous_user();
         if (anonUser != null && anonUser.length() > 0) {
             this.anonUser = anonUser;
-            this.anonPassword = config.sling_auth_anonymous_password() == null ? "".toCharArray() : config.sling_auth_anonymous_password().toCharArray();
+            this.anonPassword = config.sling_auth_anonymous_password() == null ? "".toCharArray()
+                    : config.sling_auth_anonymous_password().toCharArray();
         } else {
             this.anonUser = null;
             this.anonPassword = null;
@@ -410,9 +406,9 @@ public class SlingAuthenticator implements Authenticator,
         authUriSuffices = config.auth_uri_suffix();
         // don't require authentication for login/logout servlets
         authRequiredCache.addHolder(new AuthenticationRequirementHolder(
-            LoginServlet.SERVLET_PATH, false, null));
+                LoginServlet.SERVLET_PATH, false, null));
         authRequiredCache.addHolder(new AuthenticationRequirementHolder(
-            LogoutServlet.SERVLET_PATH, false, null));
+                LogoutServlet.SERVLET_PATH, false, null));
 
         // add all registered services
         if (serviceListener != null) {
@@ -467,10 +463,10 @@ public class SlingAuthenticator implements Authenticator,
      * yet.
      * <p>
      *
-     * @param request The request object containing the information for the
-     *            authentication.
+     * @param request  The request object containing the information for the
+     *                 authentication.
      * @param response The response object which may be used to send the
-     *            information on the request failure to the user.
+     *                 information on the request failure to the user.
      * @return <code>true</code> if request processing should continue assuming
      *         successful authentication. If <code>false</code> is returned it
      *         is assumed a response has been sent to the client and the request
@@ -521,7 +517,7 @@ public class SlingAuthenticator implements Authenticator,
         try {
             postProcess(authInfo, request, response);
         } catch (LoginException e) {
-        	postLoginFailedEvent(request, authInfo, e);
+            postLoginFailedEvent(request, authInfo, e);
 
             handleLoginFailure(request, response, authInfo, e);
             return false;
@@ -565,11 +561,12 @@ public class SlingAuthenticator implements Authenticator,
      * Any response sent by the handler is also handled by the error handler
      * infrastructure.
      *
-     * @param request The request object
+     * @param request  The request object
      * @param response The response object to which to send the request
-     * @throws IllegalStateException If response is already committed
+     * @throws IllegalStateException            If response is already committed
      * @throws NoAuthenticationHandlerException If no authentication handler
-     *             claims responsibility to authenticate the request.
+     *                                          claims responsibility to
+     *                                          authenticate the request.
      */
     @Override
     public void login(HttpServletRequest request, HttpServletResponse response) {
@@ -586,18 +583,19 @@ public class SlingAuthenticator implements Authenticator,
         boolean done = false;
         for (int m = 0; !done && m < holdersArray.length; m++) {
             final Collection<AbstractAuthenticationHandlerHolder> holderList = holdersArray[m];
-            if ( holderList != null ) {
+            if (holderList != null) {
                 for (AbstractAuthenticationHandlerHolder holder : holderList) {
                     if (isNodeRequiresAuthHandler(path, holder.path)) {
                         log.debug("login: requesting authentication using handler: {}",
-                            holder);
+                                holder);
 
                         try {
                             done = holder.requestCredentials(request, response);
                         } catch (IOException ioe) {
                             log.error(
-                                "login: Failed sending authentication request through handler "
-                                    + holder + ", access forbidden", ioe);
+                                    "login: Failed sending authentication request through handler "
+                                            + holder + ", access forbidden",
+                                    ioe);
                             done = true;
                         }
                         if (done) {
@@ -651,14 +649,15 @@ public class SlingAuthenticator implements Authenticator,
                 for (AbstractAuthenticationHandlerHolder holder : holderSet) {
                     if (isNodeRequiresAuthHandler(path, holder.path)) {
                         log.debug("logout: dropping authentication using handler: {}",
-                            holder);
+                                holder);
 
                         try {
                             holder.dropCredentials(request, response);
                         } catch (IOException ioe) {
                             log.error(
-                                "logout: Failed dropping authentication through handler "
-                                    + holder, ioe);
+                                    "logout: Failed dropping authentication through handler "
+                                            + holder,
+                                    ioe);
                         }
                     }
                 }
@@ -743,6 +742,7 @@ public class SlingAuthenticator implements Authenticator,
 
     /**
      * Get the request path from the request
+     * 
      * @param request The request
      * @return The path
      */
@@ -775,14 +775,14 @@ public class SlingAuthenticator implements Authenticator,
             final Collection<AbstractAuthenticationHandlerHolder> local = localArray[m];
             if (local != null) {
                 for (AbstractAuthenticationHandlerHolder holder : local) {
-                    if (isNodeRequiresAuthHandler(path, holder.path)){
+                    if (isNodeRequiresAuthHandler(path, holder.path)) {
                         final AuthenticationInfo authInfo = holder.extractCredentials(
-                            request, response);
+                                request, response);
 
                         if (authInfo != null) {
                             // add the feedback handler to the info (may be null)
                             authInfo.put(AUTH_INFO_PROP_FEEDBACK_HANDLER,
-                                holder.getFeedbackHandler());
+                                    holder.getFeedbackHandler());
 
                             return authInfo;
                         }
@@ -794,7 +794,7 @@ public class SlingAuthenticator implements Authenticator,
         // check whether the HTTP Basic handler can extract the header
         if (httpBasicHandler != null) {
             final AuthenticationInfo authInfo = httpBasicHandler.extractCredentials(
-                request, response);
+                    request, response);
             if (authInfo != null) {
                 authInfo.put(AUTH_INFO_PROP_FEEDBACK_HANDLER, httpBasicHandler);
                 return authInfo;
@@ -810,15 +810,14 @@ public class SlingAuthenticator implements Authenticator,
      * Run through the available post processors.
      */
     private void postProcess(AuthenticationInfo info, HttpServletRequest request, HttpServletResponse response)
-    		throws LoginException {
+            throws LoginException {
         Object[] services = authInfoPostProcessorTracker.getServices();
         if (services != null) {
             for (Object serviceObj : services) {
-                ((AuthenticationInfoPostProcessor)serviceObj).postProcess(info, request, response);
+                ((AuthenticationInfoPostProcessor) serviceObj).postProcess(info, request, response);
             }
         }
     }
-
 
     /**
      * Try to acquire a ResourceResolver as indicated by authInfo
@@ -833,7 +832,8 @@ public class SlingAuthenticator implements Authenticator,
             final AuthenticationInfo authInfo) {
 
         // prepare the feedback handler
-        final AuthenticationFeedbackHandler feedbackHandler = (AuthenticationFeedbackHandler) authInfo.remove(AUTH_INFO_PROP_FEEDBACK_HANDLER);
+        final AuthenticationFeedbackHandler feedbackHandler = (AuthenticationFeedbackHandler) authInfo
+                .remove(AUTH_INFO_PROP_FEEDBACK_HANDLER);
         final Object sendLoginEvent = authInfo.remove(AuthConstants.AUTH_INFO_LOGIN);
 
         // try to connect
@@ -877,13 +877,13 @@ public class SlingAuthenticator implements Authenticator,
             return processRequest;
 
         } catch (LoginException re) {
-        	postLoginFailedEvent(request, authInfo, re);
+            postLoginFailedEvent(request, authInfo, re);
 
             // handle failure feedback before proceeding to handling the
             // failed login internally
             if (feedbackHandler != null) {
                 feedbackHandler.authenticationFailed(request, response,
-                    authInfo);
+                        authInfo);
             }
 
             // now find a way to get credentials unless the feedback handler
@@ -909,7 +909,7 @@ public class SlingAuthenticator implements Authenticator,
             }
         }
         return false;
-   }
+    }
 
     /** Try to acquire an anonymous ResourceResolver */
     private boolean getAnonymousResolver(final HttpServletRequest request,
@@ -925,7 +925,7 @@ public class SlingAuthenticator implements Authenticator,
                 // check whether the client asked for redirect after
                 // authentication and/or impersonation
                 if (DefaultAuthenticationFeedbackHandler.handleRedirect(
-                    request, response)) {
+                        request, response)) {
 
                     // request will now be terminated, so close the resolver
                     // to release resources
@@ -978,7 +978,7 @@ public class SlingAuthenticator implements Authenticator,
         return false;
     }
 
-   private boolean isNodeRequiresAuthHandler(String path, String holderPath) {
+    private boolean isNodeRequiresAuthHandler(String path, String holderPath) {
         if (("/").equals(holderPath)) {
             return true;
         }
@@ -993,12 +993,12 @@ public class SlingAuthenticator implements Authenticator,
             return true;
         }
 
-        if (path.startsWith(holderPath) && (path.charAt(holderPathLength) == '/' || path.charAt(holderPathLength) == '.')) {
+        if (path.startsWith(holderPath)
+                && (path.charAt(holderPathLength) == '/' || path.charAt(holderPathLength) == '.')) {
             return true;
         }
         return false;
     }
-
 
     /**
      * Returns credentials to use for anonymous resource access. If an anonymous
@@ -1027,21 +1027,23 @@ public class SlingAuthenticator implements Authenticator,
 
             // to many users, send a 503 Service Unavailable
             log.info("handleLoginFailure: Too many sessions for {}: {}", user,
-                reason.getMessage());
+                    reason.getMessage());
 
             try {
                 response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "SlingAuthenticator: Too Many Users");
+                        "SlingAuthenticator: Too Many Users");
             } catch (IOException ioe) {
                 log.error(
-                    "handleLoginFailure: Cannot send status 503 to client", ioe);
+                        "handleLoginFailure: Cannot send status 503 to client", ioe);
             }
 
         } else if (reason instanceof LoginException) {
             log.info("handleLoginFailure: Unable to authenticate {}: {}", user,
                     reason.getMessage());
-            if (isAnonAllowed(request) && !expectAuthenticationHandler(request) && !AuthUtil.isValidateRequest(request)) {
-                log.debug("handleLoginFailure: LoginException on an anonymous resource, fallback to getAnonymousResolver");
+            if (isAnonAllowed(request) && !expectAuthenticationHandler(request)
+                    && !AuthUtil.isValidateRequest(request)) {
+                log.debug(
+                        "handleLoginFailure: LoginException on an anonymous resource, fallback to getAnonymousResolver");
                 processRequest = getAnonymousResolver(request, response, new AuthenticationInfo(null));
             } else {
                 // request authentication information and send 403 (Forbidden)
@@ -1050,23 +1052,23 @@ public class SlingAuthenticator implements Authenticator,
                 AuthenticationHandler.FAILURE_REASON_CODES code = getFailureReasonFromException(authInfo, reason);
                 String message = null;
                 switch (code) {
-				case ACCOUNT_LOCKED:
-                    message = "Account is locked";
-					break;
-				case ACCOUNT_NOT_FOUND:
-                    message = "Account was not found";
-					break;
-				case PASSWORD_EXPIRED:
-                    message = "Password expired";
-					break;
-				case PASSWORD_EXPIRED_AND_NEW_PASSWORD_IN_HISTORY:
-                    message = "Password expired and new password found in password history";
-					break;
-				case UNKNOWN:
-				case INVALID_LOGIN:
-				default:
-					message = "User name and password do not match";
-					break;
+                    case ACCOUNT_LOCKED:
+                        message = "Account is locked";
+                        break;
+                    case ACCOUNT_NOT_FOUND:
+                        message = "Account was not found";
+                        break;
+                    case PASSWORD_EXPIRED:
+                        message = "Password expired";
+                        break;
+                    case PASSWORD_EXPIRED_AND_NEW_PASSWORD_IN_HISTORY:
+                        message = "Password expired and new password found in password history";
+                        break;
+                    case UNKNOWN:
+                    case INVALID_LOGIN:
+                    default:
+                        message = "User name and password do not match";
+                        break;
                 }
 
                 // preset a reason for the login failure
@@ -1080,16 +1082,16 @@ public class SlingAuthenticator implements Authenticator,
 
             // general problem, send a 500 Internal Server Error
             log.error("handleLoginFailure: Unable to authenticate " + user,
-                reason);
+                    reason);
 
             try {
                 response.sendError(
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "SlingAuthenticator: data access error, reason="
-                        + reason.getClass().getSimpleName());
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "SlingAuthenticator: data access error, reason="
+                                + reason.getClass().getSimpleName());
             } catch (IOException ioe) {
                 log.error(
-                    "handleLoginFailure: Cannot send status 500 to client", ioe);
+                        "handleLoginFailure: Cannot send status 500 to client", ioe);
             }
         }
         return processRequest;
@@ -1099,17 +1101,19 @@ public class SlingAuthenticator implements Authenticator,
     /**
      * Try to determine the failure reason from the thrown exception
      */
-    private AuthenticationHandler.FAILURE_REASON_CODES getFailureReasonFromException(final AuthenticationInfo authInfo, Exception reason) {
+    private AuthenticationHandler.FAILURE_REASON_CODES getFailureReasonFromException(final AuthenticationInfo authInfo,
+            Exception reason) {
         AuthenticationHandler.FAILURE_REASON_CODES code = null;
         if (reason.getClass().getName().contains("TooManySessionsException")) {
-        	// not a login failure just unavailable service
-        	code = null;
+            // not a login failure just unavailable service
+            code = null;
         } else if (reason instanceof LoginException) {
             if (reason.getCause() instanceof CredentialExpiredException) {
                 // force failure attribute to be set so handlers can
                 // react to this special circumstance
                 Object creds = authInfo.get("user.jcr.credentials");
-                if (creds instanceof SimpleCredentials && ((SimpleCredentials) creds).getAttribute("PasswordHistoryException") != null) {
+                if (creds instanceof SimpleCredentials
+                        && ((SimpleCredentials) creds).getAttribute("PasswordHistoryException") != null) {
                     code = AuthenticationHandler.FAILURE_REASON_CODES.PASSWORD_EXPIRED_AND_NEW_PASSWORD_IN_HISTORY;
                 } else {
                     code = AuthenticationHandler.FAILURE_REASON_CODES.PASSWORD_EXPIRED;
@@ -1121,8 +1125,8 @@ public class SlingAuthenticator implements Authenticator,
             }
 
             if (code == null) {
-            	// default to invalid login as the reason
-            	code = AuthenticationHandler.FAILURE_REASON_CODES.INVALID_LOGIN;
+                // default to invalid login as the reason
+                code = AuthenticationHandler.FAILURE_REASON_CODES.INVALID_LOGIN;
             }
         }
 
@@ -1154,7 +1158,8 @@ public class SlingAuthenticator implements Authenticator,
      * client.</li>
      * </ul>
      * <p>
-     * If a 403/FORBIDDEN response is sent back the {@link AbstractAuthenticationHandler#X_REASON} header is
+     * If a 403/FORBIDDEN response is sent back the
+     * {@link AbstractAuthenticationHandler#X_REASON} header is
      * set to a either the value of the
      * {@link AuthenticationHandler#FAILURE_REASON} request attribute or to some
      * generic description describing the reason. To actually send the response
@@ -1172,9 +1177,9 @@ public class SlingAuthenticator implements Authenticator,
      * credentials are not valid</li>
      * </ul>
      *
-     * @param request The current request
+     * @param request  The current request
      * @param response The response to send the credentials request (or access
-     *            denial to)
+     *                 denial to)
      * @see AbstractAuthenticationHandler#isValidateRequest(HttpServletRequest)
      * @see #isBrowserRequest(HttpServletRequest)
      * @see #isAjaxRequest(HttpServletRequest)
@@ -1190,7 +1195,8 @@ public class SlingAuthenticator implements Authenticator,
 
                 if (!AuthUtil.isAjaxRequest(request) && !isLoginLoop(request)) {
                     try {
-
+                        log.trace("SNAPSHOT : HD-NET FIX >> line 1191");
+                        removeLoginLoopCookie(request, response); // HD-NET Custom Fix.
                         login(request, response);
                         return;
 
@@ -1211,14 +1217,25 @@ public class SlingAuthenticator implements Authenticator,
 
                     }
                 }
+                // HD-NET Custom Fix.
+                else if (isLoginLoop(request)) {
+                    log.trace("SNAPSHOT : HD-NET FIX >> isLoginLoop true");
+                    if (!hasLoginLoopCookie(request)) {
+                        log.debug(
+                                "SNAPSHOT : HD-NET FIX >> doLogin: isLoginLoop add new 'sling_login_loop=1' cookie to response");
+                        response.addCookie(new Cookie("sling_login_loop", "1"));
+                        login(request, response);
+                        return;
+                    }
+                }
 
             } else {
-
                 // Presumably this is WebDAV. If HTTP Basic is fully enabled or
                 // enabled for preemptive credential support, we just request
                 // HTTP Basic credentials. Otherwise (HTTP Basic is fully
                 // switched off, 403 is sent back)
                 if (httpBasicHandler != null) {
+                    removeLoginLoopCookie(request, response); // HD-NET Custom Fix.
                     httpBasicHandler.sendUnauthorized(response);
                     return;
                 }
@@ -1233,9 +1250,41 @@ public class SlingAuthenticator implements Authenticator,
 
         // ensure a failure reason
         ensureAttribute(request, AuthenticationHandler.FAILURE_REASON,
-            "Authentication Failed");
-
+                "Authentication Failed");
+        removeLoginLoopCookie(request, response); // HD-NET Custom Fix.
         AuthUtil.sendInvalid(request, response);
+    }
+
+    // HD-NET Custom Fix.
+    private void removeLoginLoopCookie(HttpServletRequest request, HttpServletResponse response) {
+        if (hasLoginLoopCookie(request)) {
+            log.debug("SNAPSHOT : HD-NET FIX >> removeLoginLoopCookie");
+            Cookie cookie = new Cookie("sling_login_loop", "");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+        }
+    }
+
+    // HD-NET Custom Fix.
+    private boolean hasLoginLoopCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+
+        if (cookies == null) {
+            log.trace("SNAPSHOT : HD-NET FIX >> hasLoginLoopCookie : null cookies");
+            return false;
+        }
+
+        String cookieName = "sling_login_loop";
+        for (int i = 0; i < cookies.length; i++) {
+
+            Cookie cookie = cookies[i];
+            log.trace("SNAPSHOT : HD-NET FIX >> hasLoginLoopCookie : " + cookie.getName());
+            if (cookieName.equals(cookie.getName()))
+                log.debug("SNAPSHOT : HD-NET FIX >> hasLoginLoopCookie: " + cookieName);
+                return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1266,9 +1315,9 @@ public class SlingAuthenticator implements Authenticator,
      * Sets the name request attribute to the given value unless the request
      * attribute is already set a non-<code>null</code> value.
      *
-     * @param request The request on which to set the attribute
+     * @param request   The request on which to set the attribute
      * @param attribute The name of the attribute to check/set
-     * @param value The value to set the attribute to if it is not already set
+     * @param value     The value to set the attribute to if it is not already set
      */
     private void ensureAttribute(final HttpServletRequest request,
             final String attribute, final Object value) {
@@ -1288,7 +1337,7 @@ public class SlingAuthenticator implements Authenticator,
 
         // HttpService API required attributes
         request.setAttribute(ServletContextHelper.AUTHENTICATION_TYPE, authType);
-        if ( authType != null ) {
+        if (authType != null) {
             request.setAttribute(ServletContextHelper.REMOTE_USER, resolver.getUserID());
         }
 
@@ -1296,8 +1345,8 @@ public class SlingAuthenticator implements Authenticator,
         request.setAttribute(REQUEST_ATTRIBUTE_RESOLVER, resolver);
 
         log.debug(
-            "setAttributes: ResourceResolver stored as request attribute: user={}",
-            resolver.getUserID());
+                "setAttributes: ResourceResolver stored as request attribute: user={}",
+                resolver.getUserID());
     }
 
     /**
@@ -1305,20 +1354,20 @@ public class SlingAuthenticator implements Authenticator,
      * seconds. This sends a Version 1 cookie.
      *
      * @param response The {@link HttpServletResponse} on which to send
-     *            back the cookie.
-     * @param user The name of the user to impersonate as. This will be quoted
-     *            and used as the cookie value.
-     * @param maxAge The maximum age of the cookie in seconds. Positive values
-     *            are persisted on the browser for the indicated number of
-     *            seconds, setting the age to 0 (zero) causes the cookie to be
-     *            deleted in the browser and using a negative value defines a
-     *            temporary cookie to be deleted when the browser exits.
-     * @param path The cookie path to use. This is intended to be the web
-     *            application's context path. If this is empty or
-     *            <code>null</code> the root path will be used assuming the web
-     *            application is registered at the root context.
-     * @param owner The name of the user originally authenticated in the request
-     *            and who is now impersonating as <i>user</i>.
+     *                 back the cookie.
+     * @param user     The name of the user to impersonate as. This will be quoted
+     *                 and used as the cookie value.
+     * @param maxAge   The maximum age of the cookie in seconds. Positive values
+     *                 are persisted on the browser for the indicated number of
+     *                 seconds, setting the age to 0 (zero) causes the cookie to be
+     *                 deleted in the browser and using a negative value defines a
+     *                 temporary cookie to be deleted when the browser exits.
+     * @param path     The cookie path to use. This is intended to be the web
+     *                 application's context path. If this is empty or
+     *                 <code>null</code> the root path will be used assuming the web
+     *                 application is registered at the root context.
+     * @param owner    The name of the user originally authenticated in the request
+     *                 and who is now impersonating as <i>user</i>.
      */
     private void sendSudoCookie(HttpServletResponse response,
             final String user, final int maxAge, final String path,
@@ -1333,14 +1382,14 @@ public class SlingAuthenticator implements Authenticator,
             }
         } catch (IllegalArgumentException iae) {
             log.error(
-                "sendSudoCookie: Failed to quote value '{}' of cookie {}: {}",
-                new Object[] { user, this.sudoCookieName, iae.getMessage() });
+                    "sendSudoCookie: Failed to quote value '{}' of cookie {}: {}",
+                    new Object[] { user, this.sudoCookieName, iae.getMessage() });
             return;
         } catch (UnsupportedEncodingException e) {
             log.error(
                     "sendSudoCookie: Failed to quote value '{}' of cookie {}: {}",
                     new Object[] { user, this.sudoCookieName, e.getMessage() });
-                return;
+            return;
         }
 
         if (quotedUser != null) {
@@ -1348,7 +1397,7 @@ public class SlingAuthenticator implements Authenticator,
             cookie.setMaxAge(maxAge);
             cookie.setPath((path == null || path.length() == 0) ? "/" : path);
             try {
-                cookie.setComment(quotedOwner + " impersonates as " +quotedUser);
+                cookie.setComment(quotedOwner + " impersonates as " + quotedUser);
             } catch (IllegalArgumentException iae) {
                 // ignore
             }
@@ -1374,11 +1423,11 @@ public class SlingAuthenticator implements Authenticator,
      * place for this request. Else the parameter is assumed to contain the name
      * of a user to impersonate as.
      *
-     * @param req The {@link HttpServletRequest} optionally containing
-     *            the sudo parameter.
+     * @param req      The {@link HttpServletRequest} optionally containing
+     *                 the sudo parameter.
      * @param authInfo The authentication info into which the
-     *            <code>sudo.user.id</code> property is set to the impersonator
-     *            user.
+     *                 <code>sudo.user.id</code> property is set to the impersonator
+     *                 user.
      */
     private void handleImpersonation(HttpServletRequest req,
             AuthenticationInfo authInfo) {
@@ -1410,13 +1459,13 @@ public class SlingAuthenticator implements Authenticator,
      * If the new password request parameter is present, it is added to the authInfo
      * object, which is later transformed to SimpleCredentials attributes.
      *
-     * @param req The {@link HttpServletRequest} optionally containing
-     *            the new password parameter.
+     * @param req      The {@link HttpServletRequest} optionally containing
+     *                 the new password parameter.
      * @param authInfo The authentication info into which the
-     *            <code>newPassword</code> property is set.
+     *                 <code>newPassword</code> property is set.
      */
     private void handlePasswordChange(HttpServletRequest req, AuthenticationInfo authInfo) {
-        String newPassword = req.getParameter(PAR_NEW_PASSWORD );
+        String newPassword = req.getParameter(PAR_NEW_PASSWORD);
         if (newPassword != null && newPassword.length() > 0) {
             authInfo.put("user.newpassword", newPassword);
         }
@@ -1446,8 +1495,8 @@ public class SlingAuthenticator implements Authenticator,
      * is set according to the user.impersonation property where the
      * cookie is actually cleared if the property is <code>null</code>.
      *
-     * @param req Providing the current sudo cookie value
-     * @param res For setting the sudo cookie
+     * @param req      Providing the current sudo cookie value
+     * @param res      For setting the sudo cookie
      * @param authInfo Providing information about desired impersonation
      * @return <code>true</code> if the cookie has been set or cleared or
      *         <code>false</code> if the cookie is not modified.
@@ -1499,7 +1548,7 @@ public class SlingAuthenticator implements Authenticator,
         if (loginPathO instanceof String) {
             path = (String) loginPathO;
             final String ctxPath = request.getContextPath();
-            if (ctxPath !=  null && path.startsWith(ctxPath)) {
+            if (ctxPath != null && path.startsWith(ctxPath)) {
                 path = path.substring(ctxPath.length());
             }
             if (path == null || path.length() == 0) {
@@ -1522,7 +1571,7 @@ public class SlingAuthenticator implements Authenticator,
      * The response is not reset though, since the handler may have set states
      * such as an updated HTTP session or some Cookie
      *
-     * @param request The request providing the redirect target
+     * @param request  The request providing the redirect target
      * @param response The response to send the redirect to
      */
     private void redirectAfterLogout(final HttpServletRequest request,
@@ -1562,22 +1611,26 @@ public class SlingAuthenticator implements Authenticator,
     }
 
     /**
-     * Post an event to let subscribers know that a login failure has occurred.  For examples, subscribers
-     * to the {@link AuthConstants#TOPIC_LOGIN_FAILED} event topic may be used to implement a failed login throttling solution.
+     * Post an event to let subscribers know that a login failure has occurred. For
+     * examples, subscribers
+     * to the {@link AuthConstants#TOPIC_LOGIN_FAILED} event topic may be used to
+     * implement a failed login throttling solution.
      */
-    private void postLoginFailedEvent(final HttpServletRequest request, final AuthenticationInfo authInfo, Exception reason) {
+    private void postLoginFailedEvent(final HttpServletRequest request, final AuthenticationInfo authInfo,
+            Exception reason) {
         // The reason for the failure may be useful to downstream subscribers.
         AuthenticationHandler.FAILURE_REASON_CODES reason_code = getFailureReasonFromException(authInfo, reason);
-        //if reason_code is null, it is problem some non-login related failure, so don't send the event
+        // if reason_code is null, it is problem some non-login related failure, so
+        // don't send the event
         if (reason_code != null) {
-        	final Dictionary<String, Object> properties = new Hashtable<String, Object>();
+            final Dictionary<String, Object> properties = new Hashtable<String, Object>();
             if (authInfo.getUser() != null) {
                 properties.put(SlingConstants.PROPERTY_USERID, authInfo.getUser());
             }
             if (authInfo.getAuthType() != null) {
                 properties.put(AuthenticationInfo.AUTH_TYPE, authInfo.getAuthType());
             }
-           	properties.put("reason_code", reason_code.name());
+            properties.put("reason_code", reason_code.name());
 
             EventAdmin localEA = this.eventAdmin;
             if (localEA != null) {
@@ -1593,12 +1646,13 @@ public class SlingAuthenticator implements Authenticator,
      * The problem is, that the character set of cookie values is limited by
      * RFC 2109 defining that a cookie value must be token or quoted-string
      * according to RFC-2616:
+     * 
      * <pre>
      * token = 1*<any CHAR except CTLs or separators>
      * separators = "(" | ")" | "<" | ">" | "@"
-     *                | "," | ";" | ":" | "\" | <">
-     *                | "/" | "[" | "]" | "?" | "="
-     *                | "{" | "}" | SP | HT
+     * | "," | ";" | ":" | "\" | <">
+     * | "/" | "[" | "]" | "?" | "="
+     * | "{" | "}" | SP | HT
      *
      * quoted-string = ( <"> *(qdtext | quoted-pair ) <"> )
      * qdtext = <any TEXT except <">>
@@ -1607,9 +1661,10 @@ public class SlingAuthenticator implements Authenticator,
      * @param value The cookie value to quote
      * @return The quoted cookie value
      * @throws UnsupportedEncodingException
-     * @throws IllegalArgumentException If the cookie value is <code>null</code>
-     *             or cannot be quoted, primarily because it contains a quote
-     *             sign.
+     * @throws IllegalArgumentException     If the cookie value is <code>null</code>
+     *                                      or cannot be quoted, primarily because
+     *                                      it contains a quote
+     *                                      sign.
      */
     static String quoteCookieValue(final String value) throws UnsupportedEncodingException {
         // method is package private to enable unit testing
@@ -1628,7 +1683,7 @@ public class SlingAuthenticator implements Authenticator,
                 builder.append(c);
             } else if (c == 127 || (c < 32 && c != '\t')) {
                 throw new IllegalArgumentException(
-                    "Cookie value may not contain CTL character");
+                        "Cookie value may not contain CTL character");
             } else {
                 builder.append(URLEncoder.encode(String.valueOf(c), "UTF-8"));
             }
@@ -1654,12 +1709,12 @@ public class SlingAuthenticator implements Authenticator,
         }
 
         if (value.startsWith("\"") && value.endsWith("\"")) {
-            value = value.substring(1, value.length()-1);
+            value = value.substring(1, value.length() - 1);
         }
 
         StringBuilder builder = new StringBuilder();
-        String [] values = value.split("\\\\");
-        for (String v:values) {
+        String[] values = value.split("\\\\");
+        for (String v : values) {
             try {
                 builder.append(URLDecoder.decode(v, "UTF-8"));
             } catch (UnsupportedEncodingException e) {
@@ -1718,11 +1773,12 @@ public class SlingAuthenticator implements Authenticator,
                 final String path, final Object handler,
                 final ServiceReference serviceReference) {
             return new AuthenticationHandlerHolder(path,
-                (AuthenticationHandler) handler, serviceReference);
+                    (AuthenticationHandler) handler, serviceReference);
         }
 
         private void bindAuthHandler(final Object handler, final ServiceReference ref) {
-            final String[] paths = Converters.standardConverter().convert(ref.getProperty(AuthenticationHandler.PATH_PROPERTY)).to(String[].class);
+            final String[] paths = Converters.standardConverter()
+                    .convert(ref.getProperty(AuthenticationHandler.PATH_PROPERTY)).to(String[].class);
             if (paths != null && paths.length > 0) {
 
                 // generate the holders
@@ -1734,7 +1790,8 @@ public class SlingAuthenticator implements Authenticator,
                 }
 
                 // register the holders
-                AbstractAuthenticationHandlerHolder[] holders = holderList.toArray(new AbstractAuthenticationHandlerHolder[holderList.size()]);
+                AbstractAuthenticationHandlerHolder[] holders = holderList
+                        .toArray(new AbstractAuthenticationHandlerHolder[holderList.size()]);
                 for (AbstractAuthenticationHandlerHolder holder : holders) {
                     authHandlerCache.addHolder(holder);
                 }
@@ -1745,7 +1802,8 @@ public class SlingAuthenticator implements Authenticator,
         }
 
         private void unbindAuthHandler(ServiceReference ref) {
-            final AbstractAuthenticationHandlerHolder[] holders = handlerMap.remove(ref.getProperty(Constants.SERVICE_ID));
+            final AbstractAuthenticationHandlerHolder[] holders = handlerMap
+                    .remove(ref.getProperty(Constants.SERVICE_ID));
 
             if (holders != null) {
                 for (AbstractAuthenticationHandlerHolder holder : holders) {
@@ -1762,8 +1820,8 @@ public class SlingAuthenticator implements Authenticator,
                 final BundleContext context,
                 final PathBasedHolderCache<AbstractAuthenticationHandlerHolder> authHandlerCache) {
             super(context,
-                "org.apache.sling.engine.auth.AuthenticationHandler",
-                authHandlerCache);
+                    "org.apache.sling.engine.auth.AuthenticationHandler",
+                    authHandlerCache);
         }
 
         @SuppressWarnings("deprecation")
@@ -1771,8 +1829,8 @@ public class SlingAuthenticator implements Authenticator,
         protected AbstractAuthenticationHandlerHolder createHolder(String path,
                 Object handler, final ServiceReference serviceReference) {
             return new EngineAuthenticationHandlerHolder(path,
-                (org.apache.sling.engine.auth.AuthenticationHandler) handler,
-                serviceReference);
+                    (org.apache.sling.engine.auth.AuthenticationHandler) handler,
+                    serviceReference);
         }
     }
 
