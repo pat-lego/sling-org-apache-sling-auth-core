@@ -706,6 +706,7 @@ public class SlingAuthenticator implements Authenticator,
     		throws LoginException {
         final List<AuthenticationInfoPostProcessor> localList = this.authInfoPostProcessors;
         for (final AuthenticationInfoPostProcessor processor : localList) {
+            log.debug("postProcess: Invoking {} post processor after login succeeded", processor.getClass().getName());
             processor.postProcess(info, request, response);
         }
     }
