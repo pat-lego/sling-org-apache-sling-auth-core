@@ -654,8 +654,11 @@ public class SlingAuthenticator implements Authenticator,
 
         String path = getPath(request);
 
+        log.debug("getAuthenticationInfo: Handling authentication for path {}", request.getRequestURL());
+
         final Collection<AbstractAuthenticationHandlerHolder>[] localArray = this.authHandlersManager
                 .findApplicableHolders(request);
+        log.debug("getAuthenticationInfo: Found a total of {} authentication handlers", localArray.length);
         for (int m = 0; m < localArray.length; m++) {
             final Collection<AbstractAuthenticationHandlerHolder> local = localArray[m];
             if (local != null) {
@@ -663,7 +666,7 @@ public class SlingAuthenticator implements Authenticator,
                     if (holder.isPathRequiresHandler(path)){
                         final AuthenticationInfo authInfo = holder.extractCredentials(
                             request, response);
-
+                            log.debug("getAuthenticationInfo: Selected class {} to perform authentication", holder.getClass().getName());
                         if (authInfo != null) {
                             // skip the put call for known read-only objects
                             if (authInfo != AuthenticationInfo.DOING_AUTH &&
@@ -672,9 +675,10 @@ public class SlingAuthenticator implements Authenticator,
                                 authInfo.put(AUTH_INFO_PROP_FEEDBACK_HANDLER,
                                     holder.getFeedbackHandler());
                             }
-
+                            log.debug("getAuthenticationInfo: Selected class {} returned non null result returning as authenticated result", holder.getClass().getName());
                             return authInfo;
                         }
+                        log.debug("getAuthenticationInfo: Selected class {} returned null", holder.getClass().getName());
                     }
                 }
             }
