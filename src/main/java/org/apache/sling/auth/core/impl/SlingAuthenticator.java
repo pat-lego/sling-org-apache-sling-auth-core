@@ -675,7 +675,7 @@ public class SlingAuthenticator implements Authenticator,
                                 authInfo.put(AUTH_INFO_PROP_FEEDBACK_HANDLER,
                                     holder.getFeedbackHandler());
                             }
-                            log.debug("getAuthenticationInfo: Selected class {} returned non null result returning as authenticated result", holder.getClass().getName());
+                            log.debug("getAuthenticationInfo: Selected class {} returned non null result returning as authenticated result {}", holder.getClass().getName(), authInfo);
                             return authInfo;
                         }
                         log.debug("getAuthenticationInfo: Selected class {} returned null", holder.getClass().getName());
