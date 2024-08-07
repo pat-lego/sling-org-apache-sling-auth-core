@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletRequestEvent;
@@ -439,8 +440,23 @@ public class SlingAuthenticator implements Authenticator,
         return process;
     }
 
-    private boolean doHandleSecurity(HttpServletRequest request, HttpServletResponse response) {
+    private void logXRequestId(HttpServletRequest request) {
+        Optional<String> xRequestId = Optional.ofNullable(request.getHeader("x_request_id"));
+        if (xRequestId.isPresent()) {
+            log.debug("The request at path {} contained request id {}", request.getRequestURL(), xRequestId.get());
+        }
 
+        xRequestId = Optional.ofNullable(request.getHeader("x-request-id"));
+        if (xRequestId.isPresent()) {
+            log.debug("The request at path {} contained request id {}", request.getRequestURL(), xRequestId.get());
+        }
+    }
+
+    private boolean doHandleSecurity(HttpServletRequest request, HttpServletResponse response) {
+        if (log.isDebugEnabled()) {
+            logXRequestId(request);            
+        }
+        
         // 0. Check for request attribute; set if not present
         Object authUriSufficesAttr = request
                 .getAttribute(AuthConstants.ATTR_REQUEST_AUTH_URI_SUFFIX);
